@@ -1,0 +1,60 @@
+version: '2'
+services:
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dev
+    volumes:
+      - ./data/pg-data:/var/lib/postgresql/data
+  rails: &app_base
+    build: .
+    command: bash -c "dockerize -wait tcp://postgres:5432 -timeout 3m && bundle exec puma"
+    volumes:
+      - .:/var/www/workspace
+      # - ./data/bundle-data:/var/www/workspace/vendor/bundle
+      - ./data/bundle-data:/usr/local/bundle
+    ports:
+      - "3000:3000"
+    environment:
+      BUNDLE_APP_CONFIG: /var/www/workspace/.bundle
+      TZ: Asia/Tokyo
+    stdin_open: true
+    tty: true
+    depends_on:
+      - postgres
+    links:
+      - postgres
+  spring:
+    <<: *app_base
+    ports: []
+    command: bundle exec spring server
+    stdin_open: true
+    tty: true
+    pid: host
+    environment:
+      BUNDLE_APP_CONFIG: /var/www/workspace/.bundle
+      DATABASE_URL: postgres://devuser:password@db:5432/dev
+      SPRING_SOCKET: /tmp/spring/spring.sock
+    volumes:
+      - .:/var/www/workspace
+      # - ./data/bundle-data:/var/www/workspace/vendor/bundle
+      - ./data/bundle-data:/usr/local/bundle
+      - spring:/tmp/spring
+  nginx:
+    build: ./containers/nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./public:/var/www/workspace/public
+      - ./tmp:/var/www/workspace/tmp
+      - ./log:/var/www/workspace/log
+    environment:
+      TZ: Asia/Tokyo
+    depends_on:
+      - rails
+volumes:
+  spring:
