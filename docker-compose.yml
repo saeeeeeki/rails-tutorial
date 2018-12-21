@@ -37,7 +37,7 @@ services:
     pid: host
     environment:
       BUNDLE_APP_CONFIG: /var/www/workspace/.bundle
-      DATABASE_URL: postgres://devuser:password@postgres:5432/test
+      DATABASE_URL: postgres://devuser:password@postgres:5432
       SPRING_SOCKET: /tmp/spring/spring.sock
     volumes:
       - .:/var/www/workspace
