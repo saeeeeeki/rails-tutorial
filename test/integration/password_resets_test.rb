@@ -43,7 +43,7 @@ class PasswordResetsTest < ActionDispatch::IntegrationTest
                                                            user: { password: "foobaz", password_confirmation: "foobaz" } }
     assert is_logged_in?
     assert_not flash.empty?
-    assert_equal user.reload.reset_digest, nil
+    assert_nil user.reload.reset_digest
     assert_redirected_to user
   end
 
