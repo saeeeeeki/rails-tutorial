@@ -11,4 +11,5 @@
       <%= link_to "delete", micropost, method: :delete, data: { confirm: "You sure?" } %>
     <% end %>
   </span>
+  <%= render partial: 'likes/like', locals: { micropost: micropost, likes: @likes } %>
 </li>

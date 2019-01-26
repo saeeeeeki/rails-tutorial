@@ -4,6 +4,12 @@ class MicropostsController < ApplicationController
 
   def create
     @micropost = current_user.microposts.build(micropost_params)
+    @micropost.content.match(/@([\S]+)/)
+    if $1
+      replay_user = User.find_by(unique_name: $1.downcase)
+      @micropost.in_reply_to = replay_user.id
+    end
+
     if @micropost.save
       flash[:success] = "Micropost created!"
       redirect_to root_url

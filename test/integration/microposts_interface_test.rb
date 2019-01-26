@@ -35,4 +35,53 @@ class MicropostsInterfaceTest < ActionDispatch::IntegrationTest
     get user_path(users(:archer))
     assert_select 'a', text: 'delete', count: 0
   end
+
+  test "microposts reply" do
+    following = users(:lana)
+    unfollowing = users(:archer)
+
+    # can see following user's post and reply to me
+    log_in_as(following)
+    get root_path
+    post microposts_path, params: { micropost: { content: "following user's posted" } }
+    follow_redirect!
+    post microposts_path, params: { micropost: { content: "test posted to @michael_example !!" } }
+
+    log_in_as(@user)
+    get root_path
+    assert_match CGI.escapeHTML("following user's posted"), response.body
+    assert_match CGI.escapeHTML("test posted to @michael_example !!"), response.body
+
+    # can't see following user's reply to other user
+    log_in_as(following)
+    get root_path
+    post microposts_path, params: { micropost: { content: "test posted to @sterling_archer !!" } }
+
+    log_in_as(@user)
+    get root_path
+    assert_no_match CGI.escapeHTML("test posted to @sterling_archer !!"), response.body
+
+    # can see own reply to other user
+    post microposts_path, params: { micropost: { content: "test posted to @example_1 !!" } }
+    follow_redirect!
+    assert_match CGI.escapeHTML("test posted to @example_1 !!"), response.body
+
+    # can see unfollowing user reply to me
+    log_in_as(unfollowing)
+    get root_path
+    post microposts_path, params: { micropost: { content: "test posted to @michael_example !!" } }
+
+    log_in_as(@user)
+    get root_path
+    assert_match CGI.escapeHTML("test posted to @michael_example !!"), response.body
+
+    # can't see unfollowing user's post
+    log_in_as(unfollowing)
+    get root_path
+    post microposts_path, params: { micropost: { content: "unfollowing user's posted" } }
+
+    log_in_as(@user)
+    get root_path
+    assert_no_match CGI.escapeHTML("unfollowing user's posted"), response.body
+  end
 end
